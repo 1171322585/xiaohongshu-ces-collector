@@ -43,6 +43,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--formula", required=True, help="Arithmetic score expression")
     parser.add_argument("--rule", action="append", required=True, help="Boolean eligibility expression; repeatable")
     parser.add_argument("--count", type=int, required=True, help="Maximum qualifying notes to return")
+    parser.add_argument("--backup-count", type=int, default=0, help="Number of extra qualifying notes to return")
+    parser.add_argument("--include-rejected", action="store_true", help="Include rejected row details")
     parser.add_argument("--as-of", help="ISO-8601 timestamp used to compute age_days; defaults to now")
     return parser.parse_args()
 
@@ -134,6 +136,8 @@ def main() -> int:
     args = parse_args()
     if args.count < 1:
         raise ValueError("--count must be at least 1")
+    if args.backup_count < 0:
+        raise ValueError("--backup-count must be at least 0")
 
     as_of = parse_datetime(args.as_of) if args.as_of else datetime.now(timezone.utc)
     if as_of is None:
@@ -165,11 +169,19 @@ def main() -> int:
         failed = [text for text, tree in rules if not bool(evaluate(tree, values))]
         item["score"] = score
         item["age_days"] = values["age_days"]
-        item["failed_rules"] = failed
-        (qualified if not failed else rejected).append(item)
+        if failed:
+            item["failed_rules"] = failed
+            rejected.append(item)
+        else:
+            qualified.append(item)
 
     qualified.sort(key=lambda item: item["score"], reverse=True)
     rejected.sort(key=lambda item: item["score"], reverse=True)
+    rejection_summary: dict[str, int] = {}
+    for item in rejected:
+        for rule in item["failed_rules"]:
+            rejection_summary[rule] = rejection_summary.get(rule, 0) + 1
+
     result = {
         "formula": args.formula,
         "rules": args.rule,
@@ -178,9 +190,12 @@ def main() -> int:
         "qualified_count": len(qualified),
         "returned_count": min(args.count, len(qualified)),
         "qualified": qualified[: args.count],
-        "backups": qualified[args.count :],
-        "rejected": rejected,
+        "backups": qualified[args.count : args.count + args.backup_count],
+        "rejected_count": len(rejected),
+        "rejection_summary": rejection_summary,
     }
+    if args.include_rejected:
+        result["rejected"] = rejected
     write_json(args.output, result)
     return 0
 

@@ -19,19 +19,15 @@ export function parseInitialStateText(scriptText) {
     ? trimmed.slice(INITIAL_STATE_PREFIX.length)
     : trimmed;
 
-  return JSON.parse(raw.replace(/\bundefined\b/g, "null"));
+  return JSON.parse(raw.replace(/;\s*$/, "").replace(/\bundefined\b/g, "null"));
 }
 
-export function extractNote(state, expectedNoteId) {
-  const map = state?.note?.noteDetailMap ?? {};
-  const fallbackId = Object.keys(map)[0];
-  const entry = map[expectedNoteId] ?? map[fallbackId];
-  const note = entry?.note;
-
+function extractNoteEntry(note, expectedNoteId, fallbackId) {
   if (!note) {
     throw new Error("No note was found in note.noteDetailMap");
   }
 
+  const noteId = String(note.noteId ?? expectedNoteId ?? fallbackId ?? "");
   const interactions = note.interactInfo ?? {};
   const publishedAt = new Date(numberValue(note.time));
   if (Number.isNaN(publishedAt.getTime())) {
@@ -39,7 +35,7 @@ export function extractNote(state, expectedNoteId) {
   }
 
   return {
-    note_id: String(note.noteId ?? expectedNoteId ?? fallbackId ?? ""),
+    note_id: noteId,
     title: String(note.title ?? ""),
     body: String(note.desc ?? ""),
     author: String(note.user?.nickname ?? ""),
@@ -48,7 +44,22 @@ export function extractNote(state, expectedNoteId) {
     likes: numberValue(interactions.likedCount),
     comments: numberValue(interactions.commentCount),
     collects: numberValue(interactions.collectedCount),
+    url: noteId ? `https://www.xiaohongshu.com/explore/${encodeURIComponent(noteId)}` : "",
   };
+}
+
+export function extractNote(state, expectedNoteId) {
+  const map = state?.note?.noteDetailMap ?? {};
+  const fallbackId = Object.keys(map)[0];
+  const entry = map[expectedNoteId] ?? map[fallbackId];
+  return extractNoteEntry(entry?.note, expectedNoteId, fallbackId);
+}
+
+export function extractNotes(state) {
+  const map = state?.note?.noteDetailMap ?? {};
+  return Object.entries(map)
+    .filter(([, entry]) => entry?.note)
+    .map(([noteId, entry]) => extractNoteEntry(entry.note, noteId, noteId));
 }
 
 export function extractProfile(state) {
@@ -66,10 +77,7 @@ export function extractProfile(state) {
   }
 
   return {
-    author: String(profile.basicInfo?.nickname ?? ""),
     fans: numberValue(fansEntry.count),
-    fans_display: String(fansEntry.i18nCount ?? fansEntry.count ?? "0"),
-    profile_description: String(profile.basicInfo?.desc ?? ""),
   };
 }
 

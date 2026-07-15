@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 
 import {
   extractNote,
+  extractNotes,
   extractProfile,
   parseInitialStateText,
 } from "../xiaohongshu-ces-collector/scripts/extract_xhs_state.mjs";
@@ -45,16 +46,18 @@ const initialState = {
   },
 };
 
-const scriptText = `window.__INITIAL_STATE__=${JSON.stringify(initialState)}`;
+const scriptText = `window.__INITIAL_STATE__=${JSON.stringify(initialState)};`;
 const parsed = parseInitialStateText(scriptText);
 const note = extractNote(parsed, "note-001");
+const notes = extractNotes(parsed);
 const profile = extractProfile(parsed);
 
 assert.equal(note.note_id, "note-001");
 assert.equal(note.likes, 10);
 assert.equal(note.comments, 5);
 assert.equal(note.collects, 2);
-assert.equal(profile.author, "Example author");
+assert.equal(note.url, "https://www.xiaohongshu.com/explore/note-001");
+assert.equal(notes.length, 1);
 assert.equal(profile.fans, 900);
 
 console.log(JSON.stringify({ note, profile }, null, 2));
