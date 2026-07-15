@@ -1,0 +1,26 @@
+[
+  {
+    "note_id": "note-001",
+    "title": "北京暑期博物馆攻略",
+    "body": "示例正文，仅用于测试评分脚本。",
+    "author": "示例作者A",
+    "published_at": "2026-07-12T17:03:06+08:00",
+    "likes": 120,
+    "comments": 18,
+    "collects": 45,
+    "fans": 980,
+    "url": "https://www.xiaohongshu.com/explore/example-001"
+  },
+  {
+    "note_id": "note-002",
+    "title": "北京住宿推荐示例",
+    "body": "该示例会因为评论数和粉丝数不符合规则而被淘汰。",
+    "author": "示例作者B",
+    "published_at": "2026-07-13T10:00:00+08:00",
+    "likes": 200,
+    "comments": 2,
+    "collects": 10,
+    "fans": 50000,
+    "url": "https://www.xiaohongshu.com/explore/example-002"
+  }
+]

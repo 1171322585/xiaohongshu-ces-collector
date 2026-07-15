@@ -30,10 +30,10 @@ Do not supply a default CES formula or threshold. The user owns the standard for
 1. Load and follow `browser:control-in-app-browser` before browser work. Use the logged-in in-app browser session when available.
 2. Search the confirmed keywords. Choose a search sort and built-in time filter that minimizes candidate volume; treat platform filters as hints, not proof.
 3. Gather a candidate pool larger than the requested count. Reuse one detail tab and batch sequential reads.
-4. Read each note's structured page state when available. Extract note ID, title, body, author, publish time, likes, comments, collections, and source URL.
+4. Read each note's structured page state when available. Use `scripts/extract_xhs_state.mjs` to parse the state and extract note ID, title, body, author, publish time, likes, comments, collections, and source URL.
 5. Verify dates from the note detail timestamp in the confirmed timezone. Do not rely only on relative labels such as `2天前`.
 6. Run `scripts/rank_notes.py` for the first pass using the confirmed formula and rules. Check author profiles only for candidates that survive note-level rules.
-7. Read the author profile's structured page state and extract the numeric follower count. Re-run the ranking script with follower data.
+7. Read the author profile's structured page state and use `scripts/extract_xhs_state.mjs` to extract the numeric follower count. Re-run the ranking script with follower data.
 8. Remove duplicates and content excluded by the user. Continue collecting until the requested count plus at least one backup qualifies, when practical.
 9. Use `assets/report-template.md` to create the report. Sort according to the confirmed requirement and include the exact formula calculation for each note.
 10. Record the collection timestamp and state that engagement and follower counts are snapshots. Close temporary detail/profile tabs.
