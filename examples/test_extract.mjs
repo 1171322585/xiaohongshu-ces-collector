@@ -18,7 +18,6 @@ const initialState = {
           user: {
             nickname: "Example author",
             userId: "author-001",
-            xsecToken: "example-token",
           },
           interactInfo: {
             likedCount: "10",

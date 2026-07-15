@@ -44,7 +44,6 @@ export function extractNote(state, expectedNoteId) {
     body: String(note.desc ?? ""),
     author: String(note.user?.nickname ?? ""),
     author_id: String(note.user?.userId ?? ""),
-    author_token: String(note.user?.xsecToken ?? ""),
     published_at: publishedAt.toISOString(),
     likes: numberValue(interactions.likedCount),
     comments: numberValue(interactions.commentCount),
