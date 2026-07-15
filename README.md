@@ -4,8 +4,16 @@ A Codex skill that collects and ranks Xiaohongshu notes using criteria confirmed
 
 ## Install
 
+Windows PowerShell:
+
 ```powershell
 python "$env:USERPROFILE\.codex\skills\.system\skill-installer\scripts\install-skill-from-github.py" --repo 1171322585/xiaohongshu-ces-collector --path xiaohongshu-ces-collector
+```
+
+macOS/Linux:
+
+```bash
+python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/install-skill-from-github.py" --repo 1171322585/xiaohongshu-ces-collector --path xiaohongshu-ces-collector
 ```
 
 The skill becomes available on the next Codex turn. Invoke it with `$xiaohongshu-ces-collector`.
