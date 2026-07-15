@@ -22,10 +22,10 @@
 在 Codex 集成终端或系统终端执行：
 
 ```bash
-npx --yes skills add 1171322585/xiaohongshu-ces-collector --skill xiaohongshu-ces-collector --agent codex --global --yes --copy
+npx skills add 1171322585/xiaohongshu-ces-collector -g -a codex
 ```
 
-该命令通过 [Vercel Labs Agent Skills CLI](https://github.com/vercel-labs/skills) 安装到：
+仓库中只有一个 Skill，CLI 会自动选择它；`-g` 表示全局安装，`-a codex` 表示只安装给 Codex。该命令通过 [Vercel Labs Agent Skills CLI](https://github.com/vercel-labs/skills) 安装到：
 
 ```text
 ~/.agents/skills/xiaohongshu-ces-collector
@@ -217,13 +217,13 @@ macOS/Linux 将反引号换成反斜杠，或把命令写成一行。
 更新：
 
 ```bash
-npx --yes skills update xiaohongshu-ces-collector --global --yes
+npx skills update xiaohongshu-ces-collector -g
 ```
 
 卸载：
 
 ```bash
-npx --yes skills remove xiaohongshu-ces-collector --global --yes
+npx skills remove xiaohongshu-ces-collector -g
 ```
 
 ## 限制
