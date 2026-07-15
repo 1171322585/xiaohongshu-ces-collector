@@ -4,6 +4,16 @@ A Codex skill that collects and ranks Xiaohongshu notes using criteria confirmed
 
 ## Install
 
+Codex direct install with the Agent Skills CLI:
+
+```bash
+npx --yes skills add 1171322585/xiaohongshu-ces-collector --skill xiaohongshu-ces-collector --agent codex --global --yes --copy
+```
+
+This installs the skill to `~/.agents/skills/xiaohongshu-ces-collector`, which Codex scans automatically.
+
+Codex built-in installer fallback:
+
 Windows PowerShell:
 
 ```powershell
