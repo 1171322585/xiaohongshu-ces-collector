@@ -71,6 +71,16 @@ Skill 会先询问本次标准。一个完整确认示例：
 
 即使提示中已经提供了这些值，Skill 也会先汇总并请用户确认，然后才访问小红书。
 
+## 输出示例
+
+下面是一次真实运行生成的 Markdown 报告：筛选近 15 天发布、点赞量不少于 100 的南京旅游攻略笔记，并优先选择发布时间较近的 3 篇。
+
+[查看完整 Markdown 报告](examples/nanjing-travel-report.md)
+
+![南京旅游攻略筛选报告示例](examples/nanjing-travel-report.png)
+
+示例中的互动数据采集于 `2026-07-15`，仅用于展示报告结构；点赞、收藏和评论数量会继续变化。
+
 ## 执行流程
 
 ```text
@@ -199,6 +209,8 @@ macOS/Linux 将反引号换成反斜杠，或把命令写成一行。
 |-- README.md
 |-- examples/
 |   |-- candidates.json
+|   |-- nanjing-travel-report.md
+|   |-- nanjing-travel-report.png
 |   `-- test_extract.mjs
 `-- xiaohongshu-ces-collector/
     |-- SKILL.md
