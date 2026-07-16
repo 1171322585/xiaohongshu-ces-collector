@@ -1,6 +1,6 @@
 ---
 name: xiaohongshu-ces-collector
-description: Search, collect, score, and report Xiaohongshu notes using user-defined engagement formulas and eligibility rules. Use when the user asks to find or compare Xiaohongshu posts, apply CES or another interaction score, filter by date/comments/followers, or export qualifying notes to Markdown. Always ask the user to confirm the requirements and scoring standard before accessing Xiaohongshu, even when prior-run criteria are available.
+description: Search, collect, score, and report Xiaohongshu notes using user-defined engagement formulas and eligibility rules. Use when the user asks to find or compare Xiaohongshu posts, apply CES or another interaction score, filter by date/comments/followers, or export qualifying notes to Markdown. Before every run, ask for every criterion not explicitly provided in the current request, never infer or reuse prior values, and do not access Xiaohongshu until the user confirms a complete criteria summary.
 ---
 
 # Xiaohongshu CES Collector
@@ -11,17 +11,28 @@ Collect relevant Xiaohongshu notes with a low-token fast path, apply the criteri
 
 Before any browser, website, or collection action, ask the user to confirm this run's requirements. Never silently reuse values from an earlier run.
 
-Ask once in one compact confirmation message for:
+Build one complete criteria summary containing:
 
 1. Search topic or keywords.
 2. Number of qualifying notes required.
 3. Publication window and timezone.
 4. Score name and exact formula, including field weights, or `none` when only hard filters are needed.
-5. Minimum score and other hard thresholds such as comments, likes, collections, or author followers.
-6. Required output fields and format.
-7. Any exclusions, such as ads, question-only posts, duplicate authors, videos, or stale event notices.
+5. Each hard threshold separately: minimum score, likes, comments, collections, and author followers, using `none` for every threshold that does not apply.
+6. Sort order or selection priority.
+7. Required output fields and format.
+8. Exclusions such as ads, question-only posts, duplicate authors, videos, or stale event notices.
+9. Whether backup candidates are required.
 
-If the triggering message already contains values, restate them and ask the user to confirm or correct them. Ask only for missing decisions that materially affect selection. Do not start collection until the user replies with confirmation. Treat phrases such as "same as last time" as criteria that still require a one-line confirmation summary. After confirmation, do not ask again unless a platform block or genuine criteria ambiguity prevents completion.
+Treat a value as specified only when the user provides it in the current run or confirms it in a fully enumerated summary. Never copy, infer, suggest, or prefill an unspecified value from conversation history, a prior report, common practice, or an example. Mark every missing item as `待确认` and ask only for those missing items. Do not start collection until all nine items are explicit and the user confirms the complete summary.
+
+If the user says "same as last time", enumerate every reused value and require confirmation before browsing. A bare "确认" is valid only when the immediately preceding summary contains all nine items; it cannot fill an omitted criterion.
+
+Example:
+
+```text
+User: 找三篇苏州旅游攻略
+Assistant: 已知：关键词=苏州旅游攻略，数量=3。待确认：时间范围/时区、评分公式或无、点赞/评论/收藏/粉丝/最低分门槛、排序、输出字段、排除项、是否需要备选。
+```
 
 Do not supply a default CES formula or threshold. The user owns the standard for every run.
 
@@ -43,13 +54,14 @@ Use fast mode unless the user explicitly requests exhaustive research, debugging
 1. Load and follow `browser:control-in-app-browser` before browser work. Use the logged-in in-app browser session when available.
 2. Search the confirmed keywords. Choose a search sort and built-in time filter that minimizes candidate volume; treat platform filters as hints, not proof.
 3. Extract only visible candidate IDs/URLs and cheap card metadata in one targeted evaluation. Open the smallest batch likely to fill the remaining slots.
-4. Read each note's structured page state with one targeted evaluation when available. Return only note ID, title, body, author, publish time, likes, comments, collections, and a canonical token-free source URL. Use `scripts/extract_xhs_state.mjs` when local parsing is needed.
-5. Verify dates from the note detail timestamp in the confirmed timezone. Do not rely only on relative labels such as `2天前`.
-6. Apply the confirmed note-level rules immediately. Use `scripts/rank_notes.py` when a formula or multiple rules make deterministic filtering useful.
-7. If and only if a follower rule exists, open the visible author link for candidates that passed all note-level rules. Extract only the numeric follower count; never extract, store, or output authentication/query tokens.
-8. Remove duplicates and confirmed exclusions. Continue with another small batch only while fewer than the requested count qualify.
-9. Use `assets/report-template.md` to create the report. Sort according to the confirmed requirement and include the exact formula calculation for each note.
-10. Record the collection timestamp and state that engagement and follower counts are snapshots. Close temporary detail/profile tabs.
+4. Open note details by clicking the visible search-result card. Do not navigate directly to `/explore/<note-id>` during collection because token-free detail navigation commonly triggers platform blocking. Never extract or reuse query parameters. Use canonical token-free links only in the final report.
+5. Read each note's structured page state with one targeted evaluation only when it contains the selected note. If a dynamically opened detail layer leaves `noteDetailMap` empty, immediately read the scoped visible detail fields instead of retrying state extraction. Return only note ID, title, body, author, publish time, likes, comments, collections, and a canonical token-free source URL. Use `scripts/extract_xhs_state.mjs` when local parsing is needed.
+6. Verify dates from the note detail timestamp in the confirmed timezone. Do not rely only on relative labels such as `2天前`.
+7. Apply the confirmed note-level rules immediately. Use `scripts/rank_notes.py` when a formula or multiple rules make deterministic filtering useful.
+8. If and only if a follower rule exists, open the visible author link for candidates that passed all note-level rules. Extract only the numeric follower count; never extract, store, or output authentication/query tokens.
+9. Remove duplicates and confirmed exclusions. Continue with another small batch only while fewer than the requested count qualify.
+10. Use `assets/report-template.md` to create the report. Sort according to the confirmed requirement and include the exact formula calculation for each note.
+11. Record the collection timestamp and state that engagement and follower counts are snapshots. Close temporary detail/profile tabs.
 
 ## Extraction Fallback Ladder
 
