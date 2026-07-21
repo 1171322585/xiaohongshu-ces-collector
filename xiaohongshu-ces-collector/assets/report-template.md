@@ -1,29 +1,28 @@
 # {{TOPIC}}：小红书笔记筛选报告
 
-> 搜索关键词：`{{KEYWORDS}}`  
-> 当前标准：`{{FORMULA}}`  
-> 硬性条件：{{RULES}}  
-> 时间口径：{{TIMEZONE}}  
-> 数据采集时间：`{{COLLECTED_AT}}`  
-> 说明：互动量和粉丝数为采集时快照，后续可能变化。
+> 搜索关键词：`{{KEYWORDS}}`
+> 筛选/评分口径：{{SCORING_OR_FILTER_RULES}}
+> 硬性条件：{{RULES}}
+> 数据时区：{{TIMEZONE}}
+> 采集时间：`{{COLLECTED_AT}}`
+> 快照说明：互动量、粉丝数及评论内容可能在采集后变化。
 
-## 合格结果总览
+## 合格结果
 
-| 排名 | 发布时间 | 标题 | 作者 | 粉丝 | 点赞 | 评论 | 收藏 | 得分 |
-|---:|---|---|---|---:|---:|---:|---:|---:|
-| {{RANK}} | {{PUBLISHED_AT}} | {{TITLE}} | {{AUTHOR}} | {{FANS}} | {{LIKES}} | {{COMMENTS}} | {{COLLECTS}} | **{{SCORE}}** |
+> 仅保留本次任务要求的列；下面的 `{{CUSTOM_COLUMNS}}` 和 `{{CUSTOM_VALUES}}` 应替换为实际字段，不保留空占位列。
+
+| 排名 | 笔记标题 | PC 链接 | 作者 | 发布时间 | {{CUSTOM_COLUMNS}} | 入选状态 |
+|---:|---|---|---|---|---|---|
+| {{RANK}} | {{TITLE}} | {{URL}} | {{AUTHOR}} | {{PUBLISHED_AT}} | {{CUSTOM_VALUES}} | {{STATUS}} |
 
 ## {{RANK}}. {{TITLE}}
 
 - 作者：{{AUTHOR}}
 - 发布时间：{{PUBLISHED_AT}}
-- 作者粉丝：{{FANS}}
-- 数据：点赞 {{LIKES}}｜评论 {{COMMENTS}}｜收藏 {{COLLECTS}}
-- 得分：`{{CALCULATION}}`
-- 来源：[打开原笔记]({{URL}})
+- PC 链接：{{URL}}
+- 本次要求字段：{{SELECTED_FIELDS}}
+- 筛选结论：{{AUDIT_SUMMARY}}
 
-### 正文
+{{OPTIONAL_DETAIL_SECTIONS}}
 
-{{BODY}}
-
-{{TIMELINESS_WARNING}}
+> `{{OPTIONAL_DETAIL_SECTIONS}}` 只在用户要求时加入正文、评论摘要、地区、品类、转化适配或其他详情。

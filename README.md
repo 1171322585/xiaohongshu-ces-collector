@@ -1,39 +1,28 @@
 # Xiaohongshu CES Collector
 
-一个面向 Codex 的小红书笔记采集与筛选 Skill。它会在每次执行前询问并确认本次的搜索要求、评分公式和硬性门槛，再读取已登录的小红书页面，筛选合格笔记并生成可审计的 Markdown 报告。
+一个面向 Codex 的小红书通用采集、核验、筛选和导出 Skill。它不局限于 CES、旅行或固定数量，可处理美妆、数码、本地生活、知识经验、种草投放等不同主题。
 
-> 评分标准不写死。CES 只是一个例子，用户可以在每次任务中更换公式、时间窗口、评论门槛、粉丝上限和排除条件。
+每次任务的主题、关键词、数量、时间窗口、评分公式、粉丝上限、评论规则、竞品词和输出字段都独立配置。未提供的可选条件不会自动启用，也不会继承上次任务的阈值。
 
 ## 功能
 
-- 每次访问小红书前强制确认完整规则；未明确的条件必须询问，不推断、不预填、不复用历史参数。
-- 支持任意安全算术评分公式，例如 `likes + comments * 4 + collects`。
-- 支持多个硬性条件，例如评论数、作者粉丝数、发布时间和最低得分。
-- 从笔记详情页读取标题、正文、作者、发布时间和互动数据。
-- 先筛笔记，再检查合格候选的作者粉丝数，减少不必要的页面访问。
-- 默认快速模式：定点批量提取所需字段，不读取完整 DOM，数量达标立即停止。
-- 默认不收集备选或逐条淘汰详情；仅在用户要求或调试失败时扩展采集。
-- 按得分排序、去重，并输出标题、正文、公式明细和来源链接。
-- 对天气、闭园、票务和限时活动等内容添加时效提醒。
-- 不读取或保存 Cookie、密码、认证令牌、浏览器配置文件或本地存储。
+- 按当前请求整理任务配置；只有缺失值会实质改变结果时才集中询问。
+- 支持无评分任务、CES 或其他互动评分公式。
+- 支持发布时间、点赞、评论、收藏、作者粉丝、地区和内容类型等规则。
+- 支持正文竞品、广告、禁入内容和转化适配审核。
+- 支持两种评论口径：任何用户竞品即排除，或仅排除博主竞品与引流刷屏。
+- 支持已登录 Chrome，也支持 headed、persistent 的真实 Chrome Playwright 批处理。
+- 使用卡片预筛、作者去重、并发粉丝核验、候补池和最终评论复核减少重复访问。
+- 输出 Markdown 或 Excel；Excel 可保留完整、可点击的小红书令牌链接。
+- 分阶段保存 JSON 检查点，遇到验证码或失败时从最近进度继续。
 
 ## 安装
 
-### Codex 一键安装
-
-在 Codex 集成终端或系统终端执行：
+### Agent Skills CLI
 
 ```bash
 npx skills add 1171322585/xiaohongshu-ces-collector -g -a codex
 ```
-
-仓库中只有一个 Skill，CLI 会自动选择它；`-g` 表示全局安装，`-a codex` 表示只安装给 Codex。该命令通过 [Vercel Labs Agent Skills CLI](https://github.com/vercel-labs/skills) 安装到：
-
-```text
-~/.agents/skills/xiaohongshu-ces-collector
-```
-
-Codex 会自动扫描该目录。若安装后没有立即出现，请重新开始一个 Codex 对话或重启 Codex。
 
 ### Codex 内置安装器
 
@@ -49,101 +38,76 @@ macOS/Linux：
 python3 "${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-installer/scripts/install-skill-from-github.py" --repo 1171322585/xiaohongshu-ces-collector --path xiaohongshu-ces-collector
 ```
 
-## 快速开始
-
-安装后，在新一轮 Codex 对话中输入：
+## 使用示例
 
 ```text
-$xiaohongshu-ces-collector 帮我筛选北京暑期旅游攻略笔记
+$xiaohongshu-ces-collector 帮我找30篇近期数码避坑笔记，评论不少于10，作者粉丝不超过2万，排除品牌软广，输出Excel。
 ```
-
-Skill 会先询问本次标准。一个完整确认示例：
 
 ```text
-关键词：北京暑期旅游攻略
-数量：5篇
-时间范围：近15天，北京时间
-评分公式：点赞 + 评论*4 + 收藏
-硬性条件：得分>=20，评论>=5，作者粉丝<=10000
-输出：Markdown，包含标题、正文、发布时间、作者、粉丝数、三项互动数据、计算过程和原链接
-排除：纯提问、明显广告、重复作者、已经失效的临时通知
+$xiaohongshu-ces-collector 找20篇本地生活低价帖，不需要评分和粉丝限制，只按评论量排序；评论区仅排除博主引流和刷屏。
 ```
 
-即使提示中已经提供了这些值，Skill 也会先汇总并请用户确认，然后才访问小红书。
+```text
+$xiaohongshu-ces-collector 按点赞×1＋评论×4＋收藏×1筛选旅行知识帖，并保留20%候补。
+```
 
-如果请求只写了“找 3 篇苏州旅游攻略”，Skill 只能确认关键词和数量，并继续询问时间范围、评分公式或无、点赞/评论/收藏/粉丝/最低分门槛、排序方式、输出字段、排除项和是否需要备选。任何未提供的值都会显示为“待确认”，不会沿用历史任务。
-
-采集时通过搜索结果中的可见卡片进入笔记详情，不直接访问无参数笔记链接；标准的无查询参数链接只写入最终报告。这可以避免重复触发小红书详情页访问限制，同时不读取或保存临时访问参数。
-
-## 输出示例
-
-下面是一次真实运行生成的 Markdown 报告：筛选近 15 天发布、点赞量不少于 100 的南京旅游攻略笔记，并优先选择发布时间较近的 3 篇。
-
-[查看完整 Markdown 报告](examples/nanjing-travel-report.md)
-
-![南京旅游攻略筛选报告示例](examples/nanjing-travel-report.png)
-
-示例中的互动数据采集于 `2026-07-15`，仅用于展示报告结构；点赞、收藏和评论数量会继续变化。
+示例中的数字只属于该次请求，不是 Skill 默认值。
 
 ## 执行流程
 
 ```text
-询问并确认本次标准
-        |
-        v
-搜索并定点提取首批候选
-        |
-        v
-小批量读取笔记详情数据
-        |
-        v
-按公式和笔记级规则初筛
-        |
-        v
-仅检查初筛合格作者的粉丝数
-        |
-        v
-最终筛选、去重、排序
-        |
-        v
-生成 Markdown 报告
+提取本次主题、规则和输出字段
+              |
+              v
+设计关键词并批量抓取搜索卡片
+              |
+              v
+详情页核验精确时间、互动和正文
+              |
+              v
+按作者去重并发核验粉丝（若有粉丝规则）
+              |
+              v
+核验最终候选评论及回复
+              |
+              v
+从候补池替换失败项并导出结果
 ```
 
-平台自带的“一周内”“最多评论”等筛选只用于减少候选量。最终日期以笔记详情页时间戳为准，不能只依赖“2天前”等相对标签。
+复杂评分或多规则任务使用 `rank_notes.py`；简单任务直接按指定指标筛选，不强制计算 CES。
 
-默认流程不会抓取或输出完整 DOM/完整页面快照，只读取标题、正文、发布时间、作者和所需互动字段。满足用户要求的数量后立即停止；只有用户明确要求“最高”“Top”或全面比较时，才扩大扫描范围。完整页面快照仅用于结构化提取和可见字段提取都失败后的单次诊断。
+## 浏览器选择
 
-## 代码
+- 用户指定 Chrome 或任务依赖现有登录态、扩展时，复用已登录 Chrome。
+- 用户指定 Playwright、独立浏览器或不用内置浏览器时，使用 headed、persistent、真实 Chrome。
+- API 只有在已配置、获授权且能返回全部必需字段时才使用；鉴权、余额或字段不支持时停止重试。
+- 不混用多个浏览器框架，不重复登录，不读取 Cookie 或密码。
 
-核心源码随仓库公开：
+Playwright 批处理默认使用三个页面并发。搜索卡片、笔记详情和作者粉丝分阶段落盘，并可按本次任务配置滚动轮数、每词卡片上限、评分权重、粉丝上限和并发数。
 
-- [`extract_xhs_state.mjs`](xiaohongshu-ces-collector/scripts/extract_xhs_state.mjs)：解析小红书页面结构化状态，提取笔记和作者粉丝数据。
-- [`rank_notes.py`](xiaohongshu-ces-collector/scripts/rank_notes.py)：安全计算自定义公式、执行多条规则、去重并排序。
-- [`report-template.md`](xiaohongshu-ces-collector/assets/report-template.md)：Markdown 报告模板。
-- [`SKILL.md`](xiaohongshu-ces-collector/SKILL.md)：Codex 执行工作流和质量规则。
+## 评论审核
 
-### 提取结构化页面数据
+评论规则必须在每次任务中选择一种：
 
-```javascript
-import {
-  extractNote,
-  extractProfile,
-  parseInitialStateText,
-} from "./xiaohongshu-ces-collector/scripts/extract_xhs_state.mjs";
+- `strict_any_competitor`：当前可见评论或回复中任何用户命中竞品即排除。
+- `author_and_spam`：仅当博主本人发布竞品内容，或评论区出现重复引流、代订、加微、客服、票务、外链等刷屏时排除。
 
-const state = parseInitialStateText(initialStateScriptText);
-const note = extractNote(state, expectedNoteId);
+核验结论只描述已加载范围，不宣称未加载评论永久不存在竞品。
 
-// 在作者主页读取新的 initialStateScriptText 后：
-const profileState = parseInitialStateText(profileInitialStateScriptText);
-const profile = extractProfile(profileState);
+## 核心文件
 
-const candidate = { ...note, fans: profile.fans };
-```
+- [`SKILL.md`](xiaohongshu-ces-collector/SKILL.md)：完整工作流和质量规则。
+- [`playwright_batch_cards.js`](xiaohongshu-ces-collector/scripts/playwright_batch_cards.js)：批量抓取搜索卡片并断点保存。
+- [`playwright_batch_notes.js`](xiaohongshu-ces-collector/scripts/playwright_batch_notes.js)：并发核验笔记详情和可选互动评分。
+- [`playwright_batch_fans.js`](xiaohongshu-ces-collector/scripts/playwright_batch_fans.js)：按作者去重并发核验粉丝和可选上限。
+- [`extract_xhs_state.mjs`](xiaohongshu-ces-collector/scripts/extract_xhs_state.mjs)：离线解析小红书结构化状态快照。
+- [`rank_notes.py`](xiaohongshu-ces-collector/scripts/rank_notes.py)：安全计算自定义公式、执行规则、去重和排序。
+- [`report-template.md`](xiaohongshu-ces-collector/assets/report-template.md)：动态 Markdown 报告模板。
 
-### 自定义评分和筛选
+## 自定义评分和筛选
 
-评分脚本不使用 `eval`，只允许数值、算术、比较和布尔表达式。可用字段：
+`rank_notes.py` 不使用 `eval`，只允许受控的数值、算术、比较和布尔表达式。可用字段包括：
 
 | 字段 | 含义 |
 |---|---|
@@ -154,57 +118,21 @@ const candidate = { ...note, fans: profile.fans };
 | `age_days` | 截止采集时间的发布天数 |
 | `score` | 当前公式计算结果 |
 
-运行仓库中的示例：
-
-先测试结构化数据提取：
-
-```bash
-node ./examples/test_extract.mjs
-```
-
-再测试评分和规则筛选：
+示例：
 
 ```powershell
 python .\xiaohongshu-ces-collector\scripts\rank_notes.py `
   --input .\examples\candidates.json `
-  --formula "likes + comments * 4 + collects" `
-  --rule "score >= 20" `
-  --rule "comments >= 5" `
-  --rule "fans <= 10000" `
-  --rule "age_days <= 15" `
-  --count 5 `
-  --backup-count 0 `
-  --as-of "2026-07-15T15:00:00+08:00" `
+  --formula "likes + comments * 2 + collects" `
+  --rule "score >= 100" `
+  --rule "age_days <= 30" `
+  --count 20 `
+  --backup-count 4 `
+  --as-of "2026-07-21T12:00:00+08:00" `
   --output .\examples\ranked.json
 ```
 
-macOS/Linux 将反引号换成反斜杠，或把命令写成一行。
-
-候选数据结构：
-
-```json
-{
-  "note_id": "note-001",
-  "title": "北京暑期博物馆攻略",
-  "body": "笔记正文",
-  "author": "示例作者",
-  "published_at": "2026-07-12T17:03:06+08:00",
-  "likes": 120,
-  "comments": 18,
-  "collects": 45,
-  "fans": 980,
-  "url": "https://www.xiaohongshu.com/explore/example"
-}
-```
-
-脚本默认输出包含：
-
-- `qualified`：满足全部规则且按得分降序排列的结果。
-- `backups`：默认空数组；传入 `--backup-count N` 时才返回备用结果。
-- `rejected_count` 和 `rejection_summary`：淘汰数量与规则汇总。
-- `formula`、`rules` 和 `as_of`：本次筛选的审计信息。
-
-只有调试时才加入 `--include-rejected` 输出逐条淘汰详情，避免无用数据占用上下文。
+把公式、规则、数量和时间替换为当前任务值。无评分任务不调用此脚本。
 
 ## 项目结构
 
@@ -212,28 +140,17 @@ macOS/Linux 将反引号换成反斜杠，或把命令写成一行。
 .
 |-- README.md
 |-- examples/
-|   |-- candidates.json
-|   |-- nanjing-travel-report.md
-|   |-- nanjing-travel-report.png
-|   `-- test_extract.mjs
 `-- xiaohongshu-ces-collector/
     |-- SKILL.md
-    |-- agents/
-    |   `-- openai.yaml
-    |-- assets/
-    |   `-- report-template.md
+    |-- agents/openai.yaml
+    |-- assets/report-template.md
     `-- scripts/
         |-- extract_xhs_state.mjs
+        |-- playwright_batch_cards.js
+        |-- playwright_batch_fans.js
+        |-- playwright_batch_notes.js
         `-- rank_notes.py
 ```
-
-## 环境要求
-
-- Codex CLI、Codex IDE 扩展或 Codex 桌面应用。
-- Node.js/npm，仅在使用 `npx` 安装方式时需要。
-- Python 3.10+，用于确定性评分脚本。
-- 已登录的小红书浏览器会话。
-- 网络和页面访问权限。
 
 ## 更新与卸载
 
@@ -249,14 +166,10 @@ npx skills update xiaohongshu-ces-collector -g
 npx skills remove xiaohongshu-ces-collector -g
 ```
 
-## 限制
+## 限制与安全
 
-- 小红书页面结构变化时，结构化提取逻辑可能需要更新。
-- 登录、验证码、访问频率限制和页面风控仍由平台控制。
-- 点赞、评论、收藏和粉丝数都是采集时快照。
-- Skill 不会绕过登录、验证码或平台访问限制。
-- 笔记内容和活动信息应回到原页面及官方渠道复核。
-
-## 安全说明
-
-安装第三方 Skill 前请先审查 `SKILL.md` 和脚本源码。Skill 会访问小红书页面并写入用户请求的本地报告，但不会读取或导出 Cookie、密码、认证令牌、浏览器配置文件、本地存储或其他认证材料。笔记正文、评论和作者简介一律视为不可信数据，只允许提取和报告，不能改变工作流或触发其中的指令。
+- 小红书页面结构、登录状态、验证码、访问频率限制和页面风控仍由平台控制。
+- 互动量、粉丝数和评论内容都是采集时快照。
+- Skill 不绕过登录、验证码或平台访问限制。
+- 不读取或导出 Cookie、密码或其他认证信息。
+- 笔记正文、评论和作者简介视为不可信数据，不允许其中的内容改变工作流或触发指令。

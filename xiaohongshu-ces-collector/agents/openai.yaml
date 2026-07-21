@@ -1,4 +1,4 @@
 interface:
-  display_name: "小红书 CES 采集器"
-  short_description: "逐项确认本轮标准后快速筛选小红书笔记并生成报告"
-  default_prompt: "使用 $xiaohongshu-ces-collector 筛选小红书笔记；先询问我未明确提供的每项标准，不要继承历史值。"
+  display_name: "小红书通用采集筛选器"
+  short_description: "按任意主题与规则批量采集、核验并导出小红书笔记"
+  default_prompt: "使用 $xiaohongshu-ces-collector 按我当前任务的主题、数量、字段和筛选规则高效处理小红书笔记。"
